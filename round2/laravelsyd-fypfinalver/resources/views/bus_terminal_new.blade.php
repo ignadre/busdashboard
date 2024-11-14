@@ -24,7 +24,7 @@
       box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
     }
     h1 {
-      font-size: 50px;
+      font-size: 35px;
       text-align: center;
       margin-bottom: 10px;
       color: #E28413;
@@ -64,7 +64,7 @@
       align-items: center;
       text-align: center;
       padding: 5px;
-      font-size: 20px;
+      font-size: 25px;
       border-bottom: 1px solid #ccc;
     }
     .bus-item:last-child {
@@ -150,10 +150,10 @@
   <div class="current-date-time" id="current-date-time"></div>
   <div id="mydiv">
   <div class="bus-list-header">
-  <div>&nbsp;&nbsp;&nbsp;&nbsp;Bus Service</div>
+  <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Bus Service</div>
   <div>&nbsp;&nbsp;&nbsp;&nbsp;Next Arrival</div>
   <div>&nbsp;&nbsp;&nbsp;&nbsp;Next Departure</div>
-  <div>Destination</div>
+  <div>&nbsp;&nbsp;&nbsp;&nbsp;Destination</div>
   </div>
   <ul class="bus-list">
     @foreach($data['bus_data'] as $key=>$value)
@@ -162,13 +162,13 @@
         <div>
           <!--<img class="operator-logo" src="images/mybas.png" alt="Operator Logo">-->
           <span class="bus-name">
-            <svg width="90" height="55" xmlns="http://www.w3.org/2000/svg">
+            <svg width="110" height="55" xmlns="http://www.w3.org/2000/svg">
               <g>
-                <rect x="0" y="0" width="80" height="50" fill="#E28413" rx="15" ry="15"></rect>
+                <rect x="0" y="0" width="100" height="55" fill="#E28413" rx="15" ry="15"></rect>
                 @if(strpos($value['bus_service_no'], 'P') !== false)
-                  <text x="12" y="34" font-family="IdentityFont" font-size="25" fill="white">{{$value['bus_service_no']}}</text>
+                <text x="22" y="39" font-family="IdentityFont" font-size="35" fill="white">T30</text>                
                 @else
-                  <text x="18" y="34" font-family="IdentityFont" font-size="25" fill="white">{{$value['bus_service_no']}}</text>
+                  <text x="22" y="39" font-family="IdentityFont" font-size="35" fill="white">{{$value['bus_service_no']}}</text>
                 @endif
               </g>
             </svg>
