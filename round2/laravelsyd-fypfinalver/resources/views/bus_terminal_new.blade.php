@@ -19,7 +19,7 @@
       max-width: 800px;
       margin: 20px auto;
       padding: 20px;
-      background-color: #4d4d4d;
+      background-color: #111324;
       border-radius: 10px;
       box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
     }
@@ -27,7 +27,7 @@
       font-size: 50px;
       text-align: center;
       margin-bottom: 10px;
-      color: #aef310;
+      color: #E28413;
     }
     .bus-stop-info {
       text-align: center;
@@ -49,13 +49,14 @@
       justify-content: space-between;
       align-items: left;
       padding: 10px 15px;
-      background-color: #aef310;
+      background-color: #E28413;
       border-radius: 5px;
       font-size: 20px;
     }
     .bus-list-header > div {
       flex: 1;
       text-align: left;
+      color: #FFFCF2;
     }
     .bus-item {
       display: flex;
@@ -130,6 +131,14 @@
       max-width: 550px;
       height: 80px;
     }
+
+    .delay {
+    color: red;
+    font-weight: bold;
+    font-size: 16px;
+    margin-left: 10px;
+  }
+
   </style>
 </head>
 <body>
@@ -140,54 +149,55 @@
   <!--<div class="weather-info" id="weather-info"></div>-->
   <div class="current-date-time" id="current-date-time"></div>
   <div id="mydiv">
-    <div class="bus-list-header">
-      <div>&nbsp;&nbsp;&nbsp;&nbsp;Bus Service</div>
-      <div>&nbsp;&nbsp;&nbsp;&nbsp;Destination</div>
-      <div>&nbsp;&nbsp;&nbsp;&nbsp;Next Arrival</div>
-      <div>Next Departure</div>
-    </div>
-    <ul class="bus-list">
-      @foreach($data['bus_data'] as $key=>$value)
-      <li class="bus-item">
-        <div class="bus-item">
-          <div>
+  <div class="bus-list-header">
+  <div>&nbsp;&nbsp;&nbsp;&nbsp;Bus Service</div>
+  <div>&nbsp;&nbsp;&nbsp;&nbsp;Next Arrival</div>
+  <div>&nbsp;&nbsp;&nbsp;&nbsp;Next Departure</div>
+  <div>Destination</div>
+  </div>
+  <ul class="bus-list">
+    @foreach($data['bus_data'] as $key=>$value)
+    <li class="bus-item">
+      <div class="bus-item">
+        <div>
           <!--<img class="operator-logo" src="images/mybas.png" alt="Operator Logo">-->
           <span class="bus-name">
             <svg width="90" height="55" xmlns="http://www.w3.org/2000/svg">
-          <g>
-            <rect x="0" y="0" width="80" height="50" fill="darkcyan" x="10" y="10" rx="15" ry="15"></rect>
-            @if(strpos($value['bus_service_no'], 'P') !== false)
-              <text x="12" y="34" font-family="IdentityFont" font-size="25" fill="white">{{$value['bus_service_no']}}</text>
-            @else
-              <text x="18" y="34" font-family="IdentityFont" font-size="25" fill="white">{{$value['bus_service_no']}}</text>
-            @endif
-          </g>
-          </svg>
-        </span>
-        </div>
-        <div>
-          <span class="destination" id="route{{$key}}" route="{{$value['route']}}">{{$value['Destination']}}</span>
-        </div>
-        <div>
-          <span class="arrival-time" id="eta{{$key}}" eta_date="{{$value['eta_date']}}" eta_grace_check="NA">&nbsp;&nbsp;&nbsp;&nbsp;{{$value['stop_eta']}} &nbsp;
-
-          @if ($value['live'] > 0)
-              <img class="live-icon" src="images/live2.png" alt="Live Icon">
-          @endif
+              <g>
+                <rect x="0" y="0" width="80" height="50" fill="#E28413" rx="15" ry="15"></rect>
+                @if(strpos($value['bus_service_no'], 'P') !== false)
+                  <text x="12" y="34" font-family="IdentityFont" font-size="25" fill="white">{{$value['bus_service_no']}}</text>
+                @else
+                  <text x="18" y="34" font-family="IdentityFont" font-size="25" fill="white">{{$value['bus_service_no']}}</text>
+                @endif
+              </g>
+            </svg>
           </span>
         </div>
         <div>
-          <span class="next-departure" id="departure{{$key}}" departure_date="{{$value['departure_date']}}">{{$value['departure']}} &nbsp;
+          <span class="arrival-time" id="eta{{$key}}" eta_date="{{$value['eta_date']}}" eta_grace_check="NA">
+            {{$value['stop_eta']}}
+            @if ($value['live'] > 0)
+              <img class="live-icon" src="images/live2.png" alt="Live Icon">
+            @endif
+          </span>
+        </div>
+        <div>
+          <span class="next-departure" id="departure{{$key}}" departure_date="{{$value['departure_date']}}">
+            {{$value['departure']}}
             @if (strcmp($value['departure_date'], "NA") !== 0)
               <img class="timetable-icon" src="images/clock.png" alt="Timetable Icon">
             @endif
           </span>
-          <span class="next-departure" id="departure_b{{$key}}" departure_date="{{$value['departure_date2']}}">{{$value['departure2']}} &nbsp;</span>
+          <span class="next-departure" id="departure_b{{$key}}" departure_date="{{$value['departure_date2']}}">{{$value['departure2']}}</span>
+        </div>
+        <div>
+          <span class="destination" id="route{{$key}}" route="{{$value['route']}}">{{$value['Destination']}}</span>
         </div>
       </div>
-      </li>
-      @endforeach
-    </ul>
+    </li>
+    @endforeach
+  </ul>
   </div>
 </div>
 <div class="footer">
@@ -199,7 +209,6 @@
 <script>
 
     function refreshDiv() {
-
           var bus_stop_id = document.getElementById("bus_stop_id").getAttribute("bus_stop_id");
           var xhr = new XMLHttpRequest();
           xhr.open('POST', 'getBusTerminalInfoRefresh', true);
@@ -247,6 +256,54 @@
         default: return "th";
       }
     }
+
+    function updateDelays() {
+        // Get all bus items
+        var busItems = document.querySelectorAll('.bus-item');
+        
+        busItems.forEach(function(item, index) {
+            var arrivalTimeStr = document.querySelector(`#eta${index}`).textContent;
+            var departureTimeStr = document.querySelector(`#departure${index}`).textContent;
+            
+            // Convert the arrival and departure times to Date objects
+            var arrivalTime = convertToDate(arrivalTimeStr);
+            var departureTime = convertToDate(departureTimeStr);
+
+            // Check if the arrival time is later than the departure time
+            if (arrivalTime && departureTime && arrivalTime > departureTime) {
+                var delay = calculateDelay(arrivalTime, departureTime);
+                // Show the delay next to the departure time
+                var delayText = document.createElement('span');
+                delayText.classList.add('delay');
+                delayText.textContent = ` (Delayed by ${delay} min)`;
+                document.querySelector(`#departure${index}`).appendChild(delayText);
+            }
+        });
+    }
+
+      // Function to convert time string (e.g., "4:30 PM") to Date object
+      function convertToDate(timeStr) {
+        var now = new Date();
+        var [time, period] = timeStr.split(' ');
+        var [hours, minutes] = time.split(':').map(Number);
+        
+        if (period === 'PM' && hours !== 12) {
+            hours += 12; // Convert PM times to 24-hour format
+        } else if (period === 'AM' && hours === 12) {
+            hours = 0; // Convert 12 AM to 00:00
+        }
+        
+        var date = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, 0);
+        return date;
+    }
+
+    // Function to calculate the delay in minutes
+    function calculateDelay(arrivalTime, departureTime) {
+        var diffMs = arrivalTime - departureTime; // Difference in milliseconds
+        var diffMins = Math.floor(diffMs / 60000); // Convert to minutes
+        return diffMins;
+    }
+
 
     // Refresh the div every 2 seconds (adjust the interval as needed)
     //alert("call refresh");
