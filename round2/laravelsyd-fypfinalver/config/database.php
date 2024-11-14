@@ -19,12 +19,12 @@
 	$database = getenv("DB_NAME");
 
         //SLK local development DB
-	// $url = 'root@127.0.0.1:3306';
-	// $url = 'mysql://b21fb22053657c:b5826f74@us-cdbr-iron-east-05.cleardb.net/heroku_b44dfea05dd9713?reconnect=true';
-	// $host = '127.0.0.1';
-	// $username = 'root';
-	// $password = 'uogmybusz';
-	// $database = 'uogsg';
+	$url = 'root@127.0.0.1:3306';
+	$url = 'mysql://b21fb22053657c:b5826f74@us-cdbr-iron-east-05.cleardb.net/heroku_b44dfea05dd9713?reconnect=true';
+	$host = '127.0.0.1';
+	$username = 'root';
+	$password = 'fkmeman';
+	$database = 'busdb';
 
 
 return [
