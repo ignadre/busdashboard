@@ -1,0 +1,10 @@
+#!/bin/bash
+while true
+do
+  #curl --data "bus_service_no=P101" https://laravelsyd-fypfinalver.herokuapp.com/crawlFleetData;
+  #sleep 10
+  #curl --data "bus_service_no=P103" https://laravelsyd-fypfinalver.herokuapp.com/crawlFleetData;
+  #sleep 10
+  curl --data "param1=v1" https://laravelsyd-fypfinalver.herokuapp.com/calculateETA;
+  sleep 30
+done
