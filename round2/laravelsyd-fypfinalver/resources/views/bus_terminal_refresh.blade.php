@@ -17,7 +17,7 @@
               <g>
                 <rect x="0" y="0" width="100" height="55" fill="#E28413" rx="15" ry="15"></rect>
                 @if(strpos($value['bus_service_no'], 'P') !== false)
-                <text x="22" y="39" font-family="IdentityFont" font-size="35" fill="white">T30</text>                
+                <text x="14" y="39" font-family="IdentityFont" font-size="35" fill="white">{{$value['bus_service_no']}}</text>                
                 @else
                   <text x="22" y="39" font-family="IdentityFont" font-size="35" fill="white">{{$value['bus_service_no']}}</text>
                 @endif
