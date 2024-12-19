@@ -28,7 +28,7 @@
 
     // Load environment variables using vlucas/phpdotenv (if needed)
     require_once __DIR__ . '/../vendor/autoload.php';  // Correct the path to go up one directory
-    $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+    $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
     $dotenv->load();
 
     // Production DB connection configuration
