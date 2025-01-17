@@ -18,6 +18,64 @@ use Illuminate\Support\Facades\Config;
 
 class APIController extends Controller
 {
+	public function getDatabaseClass()
+	{
+		$DatabaseController = new DatabaseController();
+
+		return $DatabaseController;
+	}
+
+	public function getBusStop_method($route_id)
+	{
+
+		$array_busstop = array();
+
+		$getBusStop_Query = DB::table('bus_stop')
+							->select(	'bus_stop.bus_stop_id',
+										'bus_stop.name',
+										'bus_stop.latitude',
+										'bus_stop.longitude'
+									)
+							->join('route_bus_stop', 'bus_stop.bus_stop_id', '=', 'route_bus_stop.bus_stop_id')
+							->join('route', 'route.route_id', '=', 'route_bus_stop.route_id')
+							->where('route.route_id', $route_id)
+							->get();
+		foreach($getBusStop_Query as $singleset)
+		{
+			/* $getBusStop_singleset = [
+						'bus_stop_id' => $singleset->bus_stop_id,
+						'name' => $singleset->name,
+						'latitude' => $singleset->latitude,
+						'longitude' => $singleset->longitude
+						];
+
+			$dataset_busStop->push($getBusStop_singleset); */
+
+			array_push($array_busstop, $singleset);
+		}
+
+		return $array_busstop;
+	}
+
+	public function getNearbyBusStop_method($lat, $lng)
+	{
+		$getNearbyBusStop_Query = DB::table('bus_stop')
+										->select('*')
+										->selectraw('(6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude)))) AS distance',[$lat,$lng,$lat])
+										->join('route_bus_stop', 'bus_stop.bus_stop_id', '=', 'route_bus_stop.bus_stop_id')
+										->having('distance', '<', 1)
+										->orderBy('distance')
+										->get();
+
+		return $getNearbyBusStop_Query;
+	}
+
+	public function getBusInfoController()
+	{
+		$BusInfoController = new getBusInfoController();
+		return $BusInfoController;
+
+	}
 
     public function getNearbyBusStop(Request $request)
 	{
