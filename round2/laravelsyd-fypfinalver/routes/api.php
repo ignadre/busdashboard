@@ -36,3 +36,5 @@ Route::middleware('api')->group(function () {
 Route::middleware('api')->group(function () {
     Route::get('/routes/{route_id}/bus-stops', 'APIController@getBusStop');
 });
+
+Route::post('/getBusStop', 'getBusInfoController@getBusStop');
