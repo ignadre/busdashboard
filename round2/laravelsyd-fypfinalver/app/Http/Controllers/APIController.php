@@ -278,22 +278,23 @@ class APIController extends Controller
 
 	
 		// Check if there are bus services
-		if (!empty($array_BusService)) {
-			$formattedData = [];
-	
-			foreach ($array_BusService as $service) {
-				$formattedData[] = [
-					'bus_service_number' => $service['bus_service_no'] ?? null,
-					'route_id' => $service['route_id'] ?? null,
-					'route_order' => $service['route_order'] ?? null,
-					'eta' => isset($service['eta']) ? array_values($service['eta']) : [] // Ensure eta remains an array
-				];
-			}
-	
-			return response()->json($formattedData, 200);
-		} else {
+		$formattedData = [];
+
+		foreach ($array_BusService as $service) {
+			$formattedData[] = [
+				'bus_service_number' => $service['bus_service_no'] ?? null,
+				'route_id' => $service['route_id'] ?? null,
+				'route_order' => $service['route_order'] ?? null,
+				'eta' => isset($service['eta']) ? array_values($service['eta']) : [] // Ensure eta remains an array
+			];
+		}
+
+		if(!$array_BusService){
 			return response()->json(['message' => 'No bus service found'], 400);
 		}
+
+		return response()->json($formattedData, 200);
+		
 	}
 
 
@@ -316,7 +317,11 @@ class APIController extends Controller
             'estimated' => $location->estimated,
         ];
         }
-
+		if (!$returndata){
+			return response()->json([
+				'message' => 'An error occurred returned data is empty.'
+			], 400);
+		}
         return $returndata;
     }
 
@@ -349,7 +354,7 @@ class APIController extends Controller
 			return response()->json([
 				'message' => 'An error occurred while fetching bus stops.',
 				'error' => $e->getMessage()
-			], 500);
+			], 400);
 		}
 	}
 
