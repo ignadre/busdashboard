@@ -25,6 +25,107 @@ class APIController extends Controller
 		return $DatabaseController;
 	}
 
+	public function getTime()
+	{
+		date_default_timezone_set('Asia/Singapore');
+		return date('Y-m-d H:i:s', time());
+	}
+
+	public function bus_stops_eta_method($route_id,$bus_service_no)
+	{
+
+			$route_busstops = self::getBusstopRoute_method($route_id);
+			$route_busstops_array = array();
+			foreach ($route_busstops as $singleset2)
+			{
+				$BusService = self::getBusService_method($singleset2->bus_stop_id);
+				$eta = NULL;
+
+				foreach ($BusService as $singleset3)
+				{
+					if($singleset3->bus_service_no == $bus_service_no)
+					{
+						$eta = $singleset3->eta;
+					}
+
+				}
+
+				if($eta != NULL)
+				{
+					$dataset_busList = [
+						'stop_id' => $singleset2->bus_stop_id,
+						'stop_name' => $singleset2->name,
+						'stop_eta' => $eta
+					];
+				}
+				else
+				{
+					$dataset_busList = [
+						'stop_id' => $singleset2->bus_stop_id,
+						'stop_name' => $singleset2->name,
+						'stop_eta' => "NA"
+					];
+				}
+
+			 array_push($route_busstops_array, $dataset_busList);
+
+			}
+			return $route_busstops_array;
+
+	}
+
+	public function getBusstopRoute_method($route)
+	{
+		$getBusstopRoute_Query = DB::table('bus_stop')
+									->select('bus_stop.bus_stop_id', 'bus_stop.name', 'bus_stop.latitude', 'bus_stop.longitude')
+									->addselect(DB::raw('0 AS Distance'))
+									->join('route_bus_stop', 'bus_stop.bus_stop_id', '=', 'route_bus_stop.bus_stop_id')
+									->where('route_bus_stop.route_id', $route)
+									->orderBy('route_bus_stop.route_order')
+									->get();
+
+		return $getBusstopRoute_Query;
+	}
+
+
+	function calculateEta($calcETA_Result)
+	{
+		//$dataset_calcETA = new Collection;
+		$arr = array();
+		date_default_timezone_set('Asia/Singapore');
+		$currentTime = round(microtime(true));
+		//$currentTime = round(94727184073);
+		//echo $currentTime;
+		//dd(json_encode($getETA_Query));
+		foreach($calcETA_Result as $result)
+		{
+			$result->eta = self::processEta($currentTime, $result->eta);
+
+			array_push($arr,$result);
+		}
+		return $arr;
+	}
+
+	function processEta($t1, $etas)
+	{
+		$etaList = explode(",", $etas);
+
+		for ($i = 0; $i < count($etaList); $i++) {
+			$etaList[$i] = array(
+			    "time" => $etaList[$i],
+			    "relative_time" => self::getRelativeTime($t1, strtotime($etaList[$i]))
+			);
+		}
+
+		return $etaList;
+	}
+
+	function getRelativeTime($t1, $t2) {
+		$timediff = round(($t2-$t1)/60);
+
+		return $timediff;
+	}
+
 	public function getBusStop_method($route_id)
 	{
 
@@ -172,9 +273,24 @@ class APIController extends Controller
 		// Call your method to get bus service information
 		$array_BusService = self::getBusService_method($bus_stop_id);
 
-		// Check if the data is available
-		if ($array_BusService !== null) {
-			return response()->json($array_BusService, 200);
+		 // Ensure it's an array instead of stdClass
+		 $array_BusService = json_decode(json_encode($array_BusService), true);
+
+	
+		// Check if there are bus services
+		if (!empty($array_BusService)) {
+			$formattedData = [];
+	
+			foreach ($array_BusService as $service) {
+				$formattedData[] = [
+					'bus_service_number' => $service['bus_service_no'] ?? null,
+					'route_id' => $service['route_id'] ?? null,
+					'route_order' => $service['route_order'] ?? null,
+					'eta' => isset($service['eta']) ? array_values($service['eta']) : [] // Ensure eta remains an array
+				];
+			}
+	
+			return response()->json($formattedData, 200);
 		} else {
 			return response()->json(['message' => 'No bus service found'], 400);
 		}
@@ -237,9 +353,92 @@ class APIController extends Controller
 		}
 	}
 
+	public function getbus_stops_eta($bus_service_number, $route_id)
+	{
+		// Call method to fetch bus stop ETA details
+		$bus_stops_eta = self::bus_stops_eta_method($route_id, $bus_service_number);
+
+		// Check if data exists
+		if (!$bus_stops_eta) {
+			return response()->json(['message' => 'No bus stop data found'], 404);
+		}
+
+    // Format the response
+    $formattedData = [];
+
+    foreach ($bus_stops_eta as $stop) {
+        $formattedData[] = [
+            'bus_stop_id' => $stop['stop_id'] ?? null,
+            'bus_stop_name' => $stop['stop_name'] ?? null,
+            'eta' => isset($stop['eta']) ? array_values($stop['eta']) : []
+        ];
+    }
+
+    return response()->json($formattedData, 200);
+	}
+
+	// public function testgetKM(Request $request)
+	// {
+	// 				$busserviceno = $request->input('busserviceno');
+	// 				$routeno = $request->input('routeno');
+	// 				$arg1 = $request->input('arg1');
+	// 				$arg2 = $request->input('arg2');
+
+	// 				//13 Aug 2020
+	// 				//map the coordinate to a location on the polyline
+	// 				$sourcePolyLine = self::closepointonroute($busserviceno, $routeno, explode(',', $arg1), 0.06);
+	// 				$destinationPolyLine = self::closepointonroute($busserviceno, $routeno, explode(',', $arg2), 0.06);
+	// 				$source = explode(',', $sourcePolyLine);
+	// 				$destination = explode(',', $destinationPolyLine);
+	// 				$arg1 = $source[0] . "," . $source[1];
+	// 				$arg2 = $destination[0] . "," . $destination[1];
+	// 				//End
+
+	// 				$totaldistance = self::getDistanceOnRoute($busserviceno, $routeno, $arg1, $arg2);
+
+	// 				return response(json_encode($totaldistance), 200);
+	// }
+
+	public function search(Request $request) {
+		$query = $request->query('q');
+
+		// Check if query is missing or empty
+		if (!$query || trim($query) === '') {
+			return response()->json([
+				'error' => 'Missing or empty search parameter.'
+			], 400);
+		}
+
+		// Search for bus stops by name or ID
+		$busStops = DB::table('bus_stop')
+			->where('name', 'LIKE', "%{$query}%")
+			->orWhere('bus_stop_id', 'LIKE', "%{$query}%")
+			->select('bus_stop_id', 'name')
+			->get();
+
+		// Extract bus stop IDs from results
+		$busStopIds = $busStops->pluck('bus_stop_id');
+
+		// Find all buses that stop at these bus stops
+		$busServices = DB::table('bus_route')
+			->join('route_bus_stop', 'bus_route.route_id', '=', 'route_bus_stop.route_id')
+			->whereIn('route_bus_stop.bus_stop_id', $busStopIds)
+			->distinct()
+			->select('bus_route.bus_service_no', 'bus_route.route_id', 'route_bus_stop.route_order', 'route_bus_stop.bus_stop_id')
+			->orderBy('bus_route.bus_service_no')
+			->orderBy('route_bus_stop.route_order')
+			->get();
+
+		return response()->json([
+			'bus_stops' => $busStops,
+			'bus_services' => $busServices
+		], 200);
+	}
+
     public function getTest(){
 		$testdata = "test";
 
 		return $testdata;
 	}
+
 }

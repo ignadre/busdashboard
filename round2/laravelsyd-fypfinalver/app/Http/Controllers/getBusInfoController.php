@@ -1920,4 +1920,90 @@ class getBusInfoController extends Controller
 		//END 21th MAY 2024
 	}
 	//END 4 MAY 2024
+
+	// Route::get('/bus-services/{bus_serivce_number}/routes','getBusInfoController@determineRoute');
+	public function determineRouteV2(Request $request, $bus_service_no)
+	{
+			// $bus_service_no = $request->input('bus_service');
+			$startPoint = $request->input('first_point');
+			$endPoint = $request->input('last_point');
+			
+			$result = json_decode('{"bus_service_no":0, "route_id": "-1"}');
+			$result->bus_service_no = $bus_service_no;
+
+			$userController = new userController();
+
+			$source = explode(',', $startPoint);
+			$destination = explode(',', $endPoint);
+
+			//get all the routes of the bus service number
+			/*
+					select route_id from bus_route
+					where bus_service_no = 7
+					group by route_id
+			*/
+			$getBusRoutes_Query = DB::table('bus_route')
+															->select('route_id')
+															->where('bus_service_no', $bus_service_no)
+															->groupBy('route_id')
+															->get();
+
+		  // for each route, check the distance between two points to determine the route
+			foreach($getBusRoutes_Query as $singleset)
+			{
+						//check whether it is at the departure point
+						$busStopList = self::getBusstopRoute_method($singleset->route_id);
+
+						//print_r($busStopList);
+						$terminalStation = array($busStopList[0]->latitude, $busStopList[0]->longitude);
+						// print_r("Route ID: " . $singleset->route_id . "\n");
+						// print_r("Start Point: " . $startPoint . "\n");
+					  //print_r("First Element in Bus Stop List: " . $terminalStation . "\n");
+						$distToTerminal = $userController->caldistance($source, $terminalStation);
+						//print_r("Distance to terminal: " . $distToTerminal . "\n");
+
+						//if the distance to terminal is less than 200 meter,
+						if ($distToTerminal < 0.1)
+						{
+								$result->route_id = $singleset->route_id;
+								return response(json_encode($result), 200);
+						}
+
+						//If only one lat,lon is sent as an argument (first_point), then we can't check the distance between two points.
+						if (!is_null($endPoint))
+						{
+									//the closepointonrtoue return lat,lon,[key] -> key is the index number of the coordinates of the bus routes.
+									$s = $userController->closepointonroute($bus_service_no, $singleset->route_id, $source, 0.06);
+									$d = $userController->closepointonroute($bus_service_no, $singleset->route_id, $destination, 0.06);
+
+									 // print_r("route ID: " . $singleset->route_id . "\n");
+									 // print_r("source: " . $s . "\n");
+									 // print_r("destination: " . $d . "\n");
+									if ((!is_null($s)) && (!is_null($d)))
+									{
+											  //due to the returned coordinate in the form of lat,lon,[key], we needed to reconstruct the lat,lon (1.66,103.45)
+												$point1 = explode(',', $s);
+												$point2 = explode(',', $d);
+												$startPoint = $point1[0] . "," . $point1[1];
+												$endPoint = $point2[0] . "," . $point2[1];
+												// print_r("Start Point:" .  $startPoint . "\n");
+											  // print_r("End Point: " . $endPoint . "\n");
+												$distance = $userController->getDistanceOnRoute($bus_service_no, $singleset->route_id, $startPoint, $endPoint);
+
+												// print_r($distance);
+												if ($distance > 0)
+												{
+													  $result->route_id = $singleset->route_id;
+														break;
+												}
+												else
+														$result->route_id = -1;
+									}
+									else
+												$result->route_id = -1;
+							}
+			}
+			return response(json_encode($result), 200);
+	}
+
 }

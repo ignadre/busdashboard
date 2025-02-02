@@ -1423,6 +1423,7 @@ class userController extends Controller
 														$arg1 = $request->input('arg1');
 														$arg2 = $request->input('arg2');
 
+                            
 														//13 Aug 2020
 														//map the coordinate to a location on the polyline
 														$sourcePolyLine = self::closepointonroute($busserviceno, $routeno, explode(',', $arg1), 0.06);
@@ -3079,7 +3080,41 @@ class userController extends Controller
                              }
                     }
 
+  public function NewtestgetKM(Request $request)
+  {
+          $busserviceno = $request->input('busserviceno');
+          $routeno = $request->input('routeno');
+          $arg1 = $request->input('arg1');
+          $arg2 = $request->input('arg2');
 
+          \Log::info("Request received", compact('busserviceno', 'routeno', 'arg1', 'arg2'));
+
+          // Check if parameters exist
+        if(!$busserviceno || !$routeno || !$arg1 || !$arg2){
+          return response()-> json(['error'=> "Missing parameters"],400);
+        }
+
+        \Log::info("Received request", [
+          'busserviceno' => $busserviceno,
+          'routeno' => $routeno,
+          'arg1' => $arg1,
+          'arg2' => $arg2
+      ]);
+
+          //13 Aug 2020
+          //map the coordinate to a location on the polyline
+          $sourcePolyLine = self::closepointonroute($busserviceno, $routeno, explode(',', $arg1), 0.06);
+          $destinationPolyLine = self::closepointonroute($busserviceno, $routeno, explode(',', $arg2), 0.06);
+          $source = explode(',', $sourcePolyLine);
+          $destination = explode(',', $destinationPolyLine);
+          $arg1 = $source[0] . "," . $source[1];
+          $arg2 = $destination[0] . "," . $destination[1];
+          //End
+
+          $totaldistance = self::getDistanceOnRoute($busserviceno, $routeno, $arg1, $arg2);
+
+          return response(json_encode($totaldistance), 200);
+  }
 
 
 }
