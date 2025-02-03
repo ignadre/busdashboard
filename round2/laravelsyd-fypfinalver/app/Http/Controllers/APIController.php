@@ -421,19 +421,16 @@ class APIController extends Controller
 			->select('bus_stop_id', 'name')
 			->get();
 
-		// Extract bus stop IDs from results
-		$busStopIds = $busStops->pluck('bus_stop_id');
-
-		// Find all buses that stop at these bus stops
+		// Search for bus services and route order
 		$busServices = DB::table('bus_route')
 			->join('route_bus_stop', 'bus_route.route_id', '=', 'route_bus_stop.route_id')
-			->whereIn('route_bus_stop.bus_stop_id', $busStopIds)
+			->where('bus_route.bus_service_no', 'LIKE', "%{$query}%")
 			->distinct()
-			->select('bus_route.bus_service_no', 'bus_route.route_id', 'route_bus_stop.route_order', 'route_bus_stop.bus_stop_id')
+			->select('bus_route.bus_service_no', 'bus_route.route_id', 'route_bus_stop.route_order')
 			->orderBy('bus_route.bus_service_no')
 			->orderBy('route_bus_stop.route_order')
 			->get();
-
+		
 		return response()->json([
 			'bus_stops' => $busStops,
 			'bus_services' => $busServices
@@ -445,5 +442,42 @@ class APIController extends Controller
 
 		return $testdata;
 	}
+
+	// This search function returns busstopservices at busstop
+	// public function search(Request $request) {
+	// 	$query = $request->query('q');
+
+	// 	// Check if query is missing or empty
+	// 	if (!$query || trim($query) === '') {
+	// 		return response()->json([
+	// 			'error' => 'Missing or empty search parameter.'
+	// 		], 400);
+	// 	}
+
+	// 	// Search for bus stops by name or ID
+	// 	$busStops = DB::table('bus_stop')
+	// 		->where('name', 'LIKE', "%{$query}%")
+	// 		->orWhere('bus_stop_id', 'LIKE', "%{$query}%")
+	// 		->select('bus_stop_id', 'name')
+	// 		->get();
+
+	// 	// Extract bus stop IDs from results
+	// 	$busStopIds = $busStops->pluck('bus_stop_id');
+
+	// 	// Find all buses that stop at these bus stops
+	// 	$busServices = DB::table('bus_route')
+	// 		->join('route_bus_stop', 'bus_route.route_id', '=', 'route_bus_stop.route_id')
+	// 		->whereIn('route_bus_stop.bus_stop_id', $busStopIds)
+	// 		->distinct()
+	// 		->select('bus_route.bus_service_no', 'bus_route.route_id', 'route_bus_stop.route_order', 'route_bus_stop.bus_stop_id')
+	// 		->orderBy('bus_route.bus_service_no')
+	// 		->orderBy('route_bus_stop.route_order')
+	// 		->get();
+
+	// 	return response()->json([
+	// 		'bus_stops' => $busStops,
+	// 		'bus_services' => $busServices
+	// 	], 200);
+	// }
 
 }
