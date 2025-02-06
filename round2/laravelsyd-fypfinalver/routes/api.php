@@ -70,17 +70,18 @@ Route::middleware('api')->group(function () {
     Route::get('/search', 'APIController@search');
 });
 
-
+//10. Daryl's scheduled timing
 Route::middleware('api')->group(function () {
     Route::get('/bus-services/scheduled-timing', 'APIController@getScheduleTiming');
 });
 
 
-
+//11. 
 Route::middleware('api')->group(function () {
     Route::get('/bus-stops/{bus_stop_id}/service', 'APIController@getBusStopServices');
 });
 
+//12.
 Route::middleware('api')->group(function () {
     Route::get('/bus-stops/{bus_stop_id}/service/eta', 'APIController@getBusStopServicesETA');
 });
