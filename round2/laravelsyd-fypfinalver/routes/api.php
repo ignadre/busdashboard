@@ -70,3 +70,7 @@ Route::middleware('api')->group(function () {
     Route::get('/search', 'APIController@search');
 });
 
+
+Route::middleware('api')->group(function () {
+    Route::get('/bus-services/scheduled-timing', 'APIController@getScheduleTiming');
+});

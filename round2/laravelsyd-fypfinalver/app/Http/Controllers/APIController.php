@@ -437,6 +437,43 @@ class APIController extends Controller
 		], 200);
 	}
 
+	public function getScheduleTiming(Request $request)
+  {
+    // Get inputs from the request (bus_stop_id and route_id)
+    $bus_stop_id = $request->input('bus_stop_id');
+    $route_id = $request->input('route_id');
+
+    // Validate the input parameters
+    if (is_null($bus_stop_id) || is_null($route_id)) {
+      return response("Both bus_stop_id and route_id are required.", 400);
+    }
+
+    // Query the bus_schedule table to get the schedule for the given bus_stop_id and route_id
+    $scheduleQuery = DB::table('bus_schedule')
+              ->SELECT ('*')
+              ->where('bus_stop_id', $bus_stop_id)
+              ->where('route_id', $route_id)
+              ->get();
+
+    // Check if any schedule is found
+    if ($scheduleQuery->isEmpty()) {
+      return response("No schedule found for the given bus stop and route.", 404);
+    }
+
+    // Prepare the response data
+    $scheduleData = [];
+    foreach ($scheduleQuery as $schedule) {
+      $scheduleData[] = $schedule->schedule;
+    }
+
+    // Return the schedule timings
+    return response()->json([
+      'bus_stop_id' => $bus_stop_id,
+      'route_id' => $route_id,
+      'schedules' => $scheduleData
+    ], 200);
+  }
+
     public function getTest(){
 		$testdata = "test";
 
