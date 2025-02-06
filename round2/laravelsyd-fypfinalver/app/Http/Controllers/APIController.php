@@ -508,41 +508,92 @@ class APIController extends Controller
 		return $testdata;
 	}
 
+	
 	// This search function returns busstopservices at busstop
-	// public function search(Request $request) {
-	// 	$query = $request->query('q');
+	public function getBusStopServices($bus_stop_id) {
 
-	// 	// Check if query is missing or empty
-	// 	if (!$query || trim($query) === '') {
-	// 		return response()->json([
-	// 			'error' => 'Missing or empty search parameter.'
-	// 		], 400);
-	// 	}
+		// Find all buses that stop at these bus stops
+		$busServices = DB::table('bus_route')
+			->join('route_bus_stop', 'bus_route.route_id', '=', 'route_bus_stop.route_id')
+			->where('route_bus_stop.bus_stop_id','=', $bus_stop_id)
+			->distinct()
+			->select('bus_route.bus_service_no', 'bus_route.route_id', 'route_bus_stop.route_order')
+			->orderBy('bus_route.bus_service_no')
+			->orderBy('route_bus_stop.route_order')
+			->get();
 
-	// 	// Search for bus stops by name or ID
-	// 	$busStops = DB::table('bus_stop')
-	// 		->where('name', 'LIKE', "%{$query}%")
-	// 		->orWhere('bus_stop_id', 'LIKE', "%{$query}%")
-	// 		->select('bus_stop_id', 'name')
-	// 		->get();
+		$formattedBusServices = [];
 
-	// 	// Extract bus stop IDs from results
-	// 	$busStopIds = $busStops->pluck('bus_stop_id');
+		
+		foreach($busServices as $services){
+			$formattedBusServices []= [
+				"bus_service_number" =>$services->bus_service_no,
+            	"route_id"=>$services->route_id,
+            	"route_order"=>$services->route_order
+			];
+		}
 
-	// 	// Find all buses that stop at these bus stops
-	// 	$busServices = DB::table('bus_route')
-	// 		->join('route_bus_stop', 'bus_route.route_id', '=', 'route_bus_stop.route_id')
-	// 		->whereIn('route_bus_stop.bus_stop_id', $busStopIds)
-	// 		->distinct()
-	// 		->select('bus_route.bus_service_no', 'bus_route.route_id', 'route_bus_stop.route_order', 'route_bus_stop.bus_stop_id')
-	// 		->orderBy('bus_route.bus_service_no')
-	// 		->orderBy('route_bus_stop.route_order')
-	// 		->get();
+		return response()->json([
+			
+			'bus_services' => $formattedBusServices
+		], 200);
+	}
 
-	// 	return response()->json([
-	// 		'bus_stops' => $busStops,
-	// 		'bus_services' => $busServices
-	// 	], 200);
-	// }
+	public function getBusStopServicesETA($bus_stop_id) {
+		// Find all buses that stop at this bus stop
+		$busServices = DB::table('bus_route')
+			->join('route_bus_stop', 'bus_route.route_id', '=', 'route_bus_stop.route_id')
+			->where('route_bus_stop.bus_stop_id', '=', $bus_stop_id)
+			->distinct()
+			->select('bus_route.bus_service_no', 'bus_route.route_id', 'route_bus_stop.route_order')
+			->orderBy('bus_route.bus_service_no')
+			->orderBy('route_bus_stop.route_order')
+			->get();
+	
+		$formattedBusServices = [];
+	
+		foreach ($busServices as $services) {
+			// Fetch the latest ETA for this service at the bus stop
+			$etaData = DB::table('etav2')
+				->where('bus_stop_id', '=', $bus_stop_id)
+				->where('route_id', '=', $services->route_id)
+				->select('eta', 'time')
+				->orderByDesc('time') // Get the latest record
+				->limit(1)
+				->get();
+	
+			$etaList = [];
+	
+			foreach ($etaData as $eta) {
+				$processedETA = $this->calculateEta([$eta]); // Calculate relative time
+	
+				$etaList[] = [
+					"time" => $eta->time ?? "N/A",
+					"relative_time" => $processedETA[0]->eta ?? "N/A"
+				];
+			}
+	
+			// If no ETA data exists, add a default "N/A" entry
+			if (empty($etaList)) {
+				$etaList[] = [
+					"time" => "N/A",
+					"relative_time" => "N/A"
+				];
+			}
+	
+			$formattedBusServices[] = [
+				"bus_service_number" => $services->bus_service_no,
+				"route_id" => $services->route_id,
+				"route_order" => $services->route_order,
+				"eta" => $etaList // Store only the latest ETA
+			];
+		}
+	
+		return response()->json([
+			'bus_services' => $formattedBusServices
+		], 200);
+	}
+	
+
 
 }

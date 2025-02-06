@@ -74,3 +74,13 @@ Route::middleware('api')->group(function () {
 Route::middleware('api')->group(function () {
     Route::get('/bus-services/scheduled-timing', 'APIController@getScheduleTiming');
 });
+
+
+
+Route::middleware('api')->group(function () {
+    Route::get('/bus-stops/{bus_stop_id}/service', 'APIController@getBusStopServices');
+});
+
+Route::middleware('api')->group(function () {
+    Route::get('/bus-stops/{bus_stop_id}/service/eta', 'APIController@getBusStopServicesETA');
+});
