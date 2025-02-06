@@ -569,7 +569,7 @@ class APIController extends Controller
 	
 				$etaList[] = [
 					"time" => $eta->time ?? "N/A",
-					"relative_time" => $processedETA[0]->eta ?? "N/A"
+					"relative_time" => $processedETA->eta ?? "N/A"
 				];
 			}
 	
