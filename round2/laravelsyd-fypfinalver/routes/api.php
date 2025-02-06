@@ -57,7 +57,7 @@ Route::middleware('api')->group(function () {
 Route::middleware('api')->group(function () {
     //Not completed
     // Route::get('/determineRoute', 'getBusInfoController@determineRouteV2'); 
-    Route::get('/bus-services/{bus_service_number}/routes','getBusInfoController@determineRoute');
+    Route::get('/bus-services/{bus_service_number}/routes','getBusInfoController@newDetermineRoute');
 });
 
 //8. From https://laravelsyd-fypfinalver.herokuapp.com/getBusStop 

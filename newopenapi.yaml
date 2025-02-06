@@ -1,0 +1,482 @@
+openapi: 3.0.0
+info:
+  title: My Busz API
+  description: This is an API used for retrieving Buses and Bus Stops related data
+  version: 3
+
+tags:
+  - name: Bus Service
+    description: Retrieve data related to Bus Services
+  - name: Bus Stop
+    description: Retrieve data related to Bus Stops
+  - name: Bus Route
+    description: Operations related to Bus Routes
+  
+paths:
+  /buses/info:
+    get:
+      summary: Get bus information
+      description: Returns a list of buses with their details, including bus ID, plate number, beacon MAC address, and service number.
+      tags:
+        - Buses
+      responses:
+        '200':
+          description: A list of buses with their details.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    bus_id:
+                      type: integer
+                      example: 1
+                    plate_number:
+                      type: string
+                      example: "BMX9787"
+                    beacon_mac:
+                      type: string
+                      example: "fb:36:18:65:45:3e"
+                    bus_service_number:
+                      type: integer
+                      example: 7
+              example:
+                - bus_id: 1
+                  plate_number: "BMX9787"
+                  beacon_mac: "fb:36:18:65:45:3e"
+                  bus_service_number: 7
+                
+  /buses/location:
+    get:
+      summary: Get bus locations
+      description: Returns a list of buses with their current locations, including bus ID, plate number, route ID, timestamp, latitude, longitude, and estimated arrival time.
+      tags:
+        - Buses
+      responses:
+        '200':
+          description: A list of buses with their location details.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    bus_id:
+                      type: integer
+                      example: 59
+                    plate_number:
+                      type: string
+                      example: "JSD8539"
+                    route_id:
+                      type: integer
+                      example: 15
+                    time:
+                      type: string
+                      format: date-time
+                      example: "2025-02-03 17:19:04"
+                    latitude:
+                      type: number
+                      format: float
+                      example: 1.54362
+                    longitude:
+                      type: number
+                      format: float
+                      example: 103.8198
+                    estimated:
+                      type: integer
+                      description: Estimated arrival time in minutes
+                      example: 1
+              example:
+                - bus_id: 59
+                  plate_number: "JSD8539"
+                  route_id: 15
+                  time: "2025-02-03 17:19:04"
+                  latitude: 1.54362
+                  longitude: 103.58327
+                  estimated: 1
+                - bus_id: 33
+                  plate_number: "TESTPOOLA"
+                  route_id: 11
+                  time: "2025-02-03 17:20:25"
+                  latitude: -7.931074
+                  longitude: 112.602675
+                  estimated: 1
+                  
+        '400':
+            description: Bad request. The request was invalid or missing required parameters.
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: "An error occurred, returned data is empty."
+
+
+  /bus-stops/{bus_stop_id}/services:
+    get:
+      summary: Get bus services by bus stop id
+      description: Returns a list of bus services at a particular bus stop, including their estimated arrival times
+      tags:
+        - Bus Stop
+      parameters:
+        - name: bus_stop_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1006
+          description: The ID of the bus stop for which the bus services and ETA is requested
+
+      responses:
+        '200':
+          description: A list of bus services with their estimated arrival times.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BusServiceWithEta'
+                example:
+                  - bus_service_no: 7
+                    route_id: 1
+                    eta:
+                      - time: "2020-07-10 15:17:07"
+                        relative_time: 26
+                      - time: "2020-07-10 15:29:21"
+                        relative_time: 38
+                        
+
+  /bus-stops/nearby:
+    get:
+      summary: Get nearby bus stops
+      description: Returns a list of nearby bus stops based on the provided latitude and longitude, including bus stop details and the distance to the queried location.
+      tags:
+        - Bus Stops
+      parameters:
+        - name: latitude
+          in: query
+          required: true
+          schema:
+            type: number
+            format: float
+            example: 1.660834
+          description: Latitude of the user's location.
+        - name: longitude
+          in: query
+          required: true
+          schema:
+            type: number
+            format: float
+            example: 103.604182
+          description: Longitude of the user's location.
+      responses:
+        '200':
+          description: A list of nearby bus stops with distance from the given location.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    bus_stop_id:
+                      type: integer
+                      example: 1070
+                    bus_stop_name:
+                      type: string
+                      example: "Pekan Kulai"
+                    latitude:
+                      type: number
+                      format: float
+                      example: 1.660834
+                    longitude:
+                      type: number
+                      format: float
+                      example: 103.604182
+                    distance:
+                      type: number
+                      format: float
+                      example: 9.493529796600342e-5
+              example:
+                - bus_stop_id: 1070
+                  bus_stop_name: "Pekan Kulai"
+                  latitude: 1.660834
+                  longitude: 103.604182
+                  distance: 9.493529796600342e-5
+                - bus_stop_id: 1001
+                  bus_stop_name: Pekan Kulai - MARA"
+                  latitude: 1.661406
+                  longitude: 103.603446
+                  distance: 0.10362182337045148
+        '400':
+          description: Bad request. Missing or invalid parameters.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No nearby bus stop found."
+  
+
+  /bus-services/{bus_service_number}/routes/{route_id}/bus-stops:
+    post:
+      summary: Get bus stops for a particular bus service and route
+      description: Returns an array of bus stops along a route, each with their corresponding estimated arrival times for a particular bus service
+      tags:
+        - Bus Stop
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                bus_service_number:
+                  type: integer
+                  description: The ID of the bus service which the ETA is requested
+                  example: 7
+                route_id:
+                  type: integer
+                  description: The ID of the route which the ETA is requested
+                  example: 1
+      responses:
+        "200":
+          description: An array of Bus Stops data with their corresponding estimated arrival times
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BusStopWithEta'
+                example:
+                  - stop_id: 1033
+                    stop_name: Hospital Sultanah Aminah
+                    stop_eta:
+                      - time: "2020-07-11 12:21:59"
+                        relative_time: 46
+                      - time: "2020-07-11 12:24:32"
+                        relative_time: 48
+                  - stop_id: 1034
+                    stop_name: Jabatan Agama Islam Johor
+                    stop_eta:
+                      - time: "2020-07-11 12:22:17"
+                        relative_time: 46
+                      - time: "2020-07-11 12:24:50"
+                        relative_time: 49
+                  - stop_id: 1035
+                    stop_name: Post Office Johor Bahru
+                    stop_eta:
+                      - time: "2020-07-11 12:24:15"
+                        relative_time: 48
+                      - time: "2020-07-11 12:26:48"
+                        relative_time: 51
+                  - stop_id: 1036
+                    stop_name: JB Sentral Bus Terminal
+                    stop_eta:
+                      - time: "2020-07-11 12:28:26"
+                        relative_time: 52
+                      - time: "2020-07-11 12:30:59"
+                        relative_time: 55
+                        
+  
+  /routes/{route_id}/bus-stops:
+    get:
+      summary: Get bus stops for a specific route
+      description: Returns a list of bus stops along a given route.
+      tags:
+        - Routes
+      parameters:
+        - name: route_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 6
+          description: The ID of the route for which bus stops are requested.
+      responses:
+        '200':
+          description: A list of bus stops for the given route.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    bus_stop_id:
+                      type: integer
+                      example: 1000
+                    bus_stop_name:
+                      type: string
+                      example: "Kulai Terminal"
+                    latitude:
+                      type: string
+                      example: "1.662585"
+                    longitude:
+                      type: string
+                      example: "103.598608"
+              example:
+                - bus_stop_id: 1000
+                  bus_stop_name: "Kulai Terminal"
+                  latitude: 1.662585
+                  longitude: 103.598608
+                - bus_stop_id: 1001
+                  bus_stop_name: "Pekan Kulai - MARA"
+                  latitude: 1.661406
+                  longitude: 103.603446
+                
+        '404':
+          description: Bad request. Missing or invalid parameters.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No bus stop found."
+                    
+
+  /api/search:
+    get:
+      summary: Search for bus stops or bus services
+      description: Returns either bus stops , bus services that match the search query.
+      tags:
+        - Search
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            example: "Pekan Kulai"
+          description: The search query for bus stops or bus services.
+      responses:
+        '200':
+          description: A list of matching bus stops or bus services.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bus_stops:
+                    type: array
+                    nullable: true
+                    items:
+                      type: object
+                      properties:
+                        bus_stop_id:
+                          type: integer
+                          example: 1070
+                        bus_stop_name:
+                          type: string
+                          example: "Pekan Kulai"
+                  bus_services:
+                    type: array
+                    nullable: true
+                    items:
+                      type: object
+                      properties:
+                        bus_service_number:
+                          type: string
+                          example: "7"
+                        route_id:
+                          type: integer
+                          example: 1
+                        route_order:
+                          type: integer
+                          example: 3
+              examples:
+                Bus Stop Match:
+                  value:
+                    bus_stops:
+                      - bus_stop_id: 1070
+                        bus_stop_name: "Pekan Kulai"
+                    bus_services: null
+                Bus Service Match:
+                  value:
+                    bus_stops: null
+                    bus_services:
+                      - bus_service_number: "7"
+                        route_id: 1
+                        route_order: 3
+                Both Matches:
+                  value:
+                    bus_stops:
+                      - bus_stop_id: 1070
+                        bus_stop_name: "Pekan Kulai"
+                    bus_services:
+                      - bus_service_number: "7"
+                        route_id: 1
+                        route_order: 3
+                No Match:
+                  value:
+                    bus_stops: null
+                    bus_services: null
+                  
+
+                        
+components:
+  schemas:
+    BusServiceBasic:
+      type: object
+      properties:
+        bus_service_no:
+          type: string
+          description: The bus service number.
+        route_id:
+          type: integer
+          description: The ID of the bus route.
+    BusServiceWithEta:
+      allOf:
+        - $ref: '#/components/schemas/BusServiceBasic'
+        - type: object
+          properties:
+            eta:
+              type: array
+              description: A list of estimated times for the bus service.
+              items:
+                type: object
+                properties:
+                  time:
+                    type: string
+                    format: date-time
+                    description: The absolute arrival time of the bus
+                  relative_time:
+                    type: integer
+                    description: The relative arrival time in minutes
+
+    BusStopBasic:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique Identifier for the bus stop
+        name:
+          type: string
+          description: Name of the bus stop
+    BusStopWithEta:
+      allOf:
+        - $ref: '#/components/schemas/BusStopBasic'
+        - type: object
+          properties:
+            eta:
+              type: array
+              description: A list of estimated times for the bus service.
+              items:
+                type: object
+                properties:
+                  time:
+                    type: string
+                    format: date-time
+                    description: The absolute arrival time of the bus
+                  relative_time:
+                    type: integer
+                    description: The relative arrival time in minutes
+        
