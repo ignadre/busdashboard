@@ -421,19 +421,47 @@ class APIController extends Controller
 			->select('bus_stop_id', 'name')
 			->get();
 
+
+		$formattedBusStops = [];
+		foreach($busStops as $stops){
+			$formattedBusStops []=[
+			'bus_stop_id' => $stops->bus_stop_id,
+			'bus_stop_name' => $stops->name
+			];
+		}
+
+
 		// Search for bus services and route order
+		// $busServices = DB::table('bus_route')
+		// 	->join('route_bus_stop', 'bus_route.route_id', '=', 'route_bus_stop.route_id')
+		// 	->where('bus_route.bus_service_no', 'LIKE', "%{$query}%")
+		// 	->distinct()
+		// 	->select('bus_route.bus_service_no', 'bus_route.route_id', 'route_bus_stop.route_order')
+		// 	->orderBy('bus_route.bus_service_no')
+		// 	->orderBy('route_bus_stop.route_order')
+		// 	->get();
 		$busServices = DB::table('bus_route')
 			->join('route_bus_stop', 'bus_route.route_id', '=', 'route_bus_stop.route_id')
 			->where('bus_route.bus_service_no', 'LIKE', "%{$query}%")
 			->distinct()
-			->select('bus_route.bus_service_no', 'bus_route.route_id', 'route_bus_stop.route_order')
+			->select('bus_route.bus_service_no', 'bus_route.route_id')
 			->orderBy('bus_route.bus_service_no')
 			->orderBy('route_bus_stop.route_order')
 			->get();
+
 		
+
+		$formattedBusServices = [];
+		foreach($busServices as $services){
+			$formattedBusServices []=[
+			'bus_service_number' => $services->bus_service_no,
+			'route_id' => $services->route_id
+			];
+		}
+	
 		return response()->json([
-			'bus_stops' => $busStops,
-			'bus_services' => $busServices
+			'bus_stops' => $formattedBusStops ,
+			'bus_services' => $formattedBusServices
 		], 200);
 	}
 
