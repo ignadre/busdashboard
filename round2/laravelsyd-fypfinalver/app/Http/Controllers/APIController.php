@@ -31,48 +31,40 @@ class APIController extends Controller
 		return date('Y-m-d H:i:s', time());
 	}
 
-	public function bus_stops_eta_method($route_id,$bus_service_no)
-	{
+public function bus_stops_eta_method($route_id)
+{
+    $route_busstops = self::getBusstopRoute_method($route_id);
+    $route_busstops_array = [];
 
-			$route_busstops = self::getBusstopRoute_method($route_id);
-			$route_busstops_array = array();
-			foreach ($route_busstops as $singleset2)
-			{
-				$BusService = self::getBusService_method($singleset2->bus_stop_id);
-				$eta = NULL;
+    foreach ($route_busstops as $singleset2) {
+        $BusService = self::getBusService_method($singleset2->bus_stop_id);
+        $etaList = [];
 
-				foreach ($BusService as $singleset3)
-				{
-					if($singleset3->bus_service_no == $bus_service_no)
-					{
-						$eta = $singleset3->eta;
-					}
+        foreach ($BusService as $singleset3) {
+            $etaList[] = [
+                'bus_service_no' => $singleset3['bus_service_no'],
+                'eta' => $singleset3['eta']
+            ];
+        }
 
-				}
+        if (empty($etaList)) {
+            $etaList = [];
+        }
 
-				if($eta != NULL)
-				{
-					$dataset_busList = [
-						'stop_id' => $singleset2->bus_stop_id,
-						'stop_name' => $singleset2->name,
-						'stop_eta' => $eta
-					];
-				}
-				else
-				{
-					$dataset_busList = [
-						'stop_id' => $singleset2->bus_stop_id,
-						'stop_name' => $singleset2->name,
-						'stop_eta' => "NA"
-					];
-				}
+        $dataset_busList = [
+            'stop_id' => $singleset2->bus_stop_id,
+            'stop_name' => $singleset2->name,
+			'latitude' => $singleset2->latitude, // Added Latitude
+            'longitude' => $singleset2->longitude, // Added Longitude
+            'stop_eta' => $etaList
+        ];
 
-			 array_push($route_busstops_array, $dataset_busList);
+        array_push($route_busstops_array, $dataset_busList);
+    }
+    
+    return $route_busstops_array;
+}
 
-			}
-			return $route_busstops_array;
-
-	}
 
 	public function getBusstopRoute_method($route)
 	{
@@ -99,26 +91,49 @@ class APIController extends Controller
 		//dd(json_encode($getETA_Query));
 		foreach($calcETA_Result as $result)
 		{
-			$result->eta = self::processEta($currentTime, $result->eta);
-
-			array_push($arr,$result);
+			$etaList = explode(",", $result->eta);
+	
+			$processedEtaList = [];
+			foreach ($etaList as $eta) {
+				$processedEtaList[] = [
+					"time" => $eta,
+					"relative_time" => self::getRelativeTime($currentTime, strtotime($eta))
+				];
+			}
+	
+			$arr[] = [
+				'bus_service_no' => $result->bus_service_no ?? null,
+				'eta' => $processedEtaList
+			];
 		}
+	
 		return $arr;
 	}
 
-	function processEta($t1, $etas)
+	function processEta($currentTime, $etas)
 	{
-		$etaList = explode(",", $etas);
-
-		for ($i = 0; $i < count($etaList); $i++) {
-			$etaList[$i] = array(
-			    "time" => $etaList[$i],
-			    "relative_time" => self::getRelativeTime($t1, strtotime($etaList[$i]))
-			);
+		$etaList = explode(",", $etas); // Split the ETA string into individual times
+	
+		// Initialize etaList to store processed times and relative times
+		$etaList = [];
+	
+		foreach ($etaList as $eta) {
+			$etaTime = trim($eta); // Clean any spaces around the ETA time
+			if ($etaTime) {
+				// Calculate relative time from the current time
+				$relativeTime = self::getRelativeTime($currentTime, strtotime($etaTime));
+				
+				// Store the time and relative time in the etaList array
+				$etaList[] = [
+					"time" => $etaTime,
+					"relative_time" => $relativeTime
+				];
+			}
 		}
-
+	
 		return $etaList;
 	}
+	
 
 	function getRelativeTime($t1, $t2) {
 		$timediff = round(($t2-$t1)/60);
@@ -237,12 +252,10 @@ class APIController extends Controller
 		$time = self::getTime();
 
 		$bus_service_Query = DB::table('etav2 AS e')
-							->select('e.route_id','bus_route.bus_service_no','route_bus_stop.route_order')
-							->selectraw('GROUP_CONCAT(DISTINCT eta) AS eta')
-							->join('bus_route', function ($join)
-							{
+							->select('e.route_id', 'bus_route.bus_service_no', 'route_bus_stop.route_order', 'e.eta', 'e.time')
+							->join('bus_route', function ($join) {
 								$join->on('bus_route.bus_id', '=', 'e.bus_id')
-									->on('bus_route.route_id','=', 'e.route_id');
+									->on('bus_route.route_id', '=', 'e.route_id');
 							})
 							->join('route_bus_stop', function ($join) {
 								$join->on('route_bus_stop.route_id', '=', 'e.route_id')
@@ -358,10 +371,10 @@ class APIController extends Controller
 		}
 	}
 
-	public function getbus_stops_eta($bus_service_number, $route_id)
+	public function getbus_stops_eta($route_id)
 	{
 		// Call method to fetch bus stop ETA details
-		$bus_stops_eta = self::bus_stops_eta_method($route_id, $bus_service_number);
+		$bus_stops_eta = self::bus_stops_eta_method($route_id);
 
 		// Check if data exists
 		if (!$bus_stops_eta) {
@@ -375,7 +388,9 @@ class APIController extends Controller
         $formattedData[] = [
             'bus_stop_id' => $stop['stop_id'] ?? null,
             'bus_stop_name' => $stop['stop_name'] ?? null,
-            'eta' => isset($stop['eta']) ? array_values($stop['eta']) : []
+			'latitude' => $stop['latitude'] ?? null, // Added Latitude
+            'longitude' => $stop['longitude'] ?? null, // Added Longitude
+            'eta' => $stop['stop_eta'] ?? []
         ];
     }
 
@@ -447,7 +462,7 @@ class APIController extends Controller
 			->select('bus_route.bus_service_no', 'bus_route.route_id')
 			->orderBy('bus_route.bus_service_no')
 			->orderBy('route_bus_stop.route_order')
-			->get();
+			->get(); 
 
 		
 
@@ -568,17 +583,14 @@ class APIController extends Controller
 				$processedETA = $this->calculateEta([$eta]); // Calculate relative time
 	
 				$etaList[] = [
-					"time" => $eta->time ?? "N/A",
-					"relative_time" => $processedETA->eta ?? "N/A"
+					"time" => !empty($eta->time) ? $eta->time : [],
+					"relative_time" => !empty($processedETA->eta) ? $processedETA->eta : []
 				];
 			}
 	
 			// If no ETA data exists, add a default "N/A" entry
 			if (empty($etaList)) {
-				$etaList[] = [
-					"time" => "N/A",
-					"relative_time" => "N/A"
-				];
+				$etaList = [];
 			}
 	
 			$formattedBusServices[] = [
