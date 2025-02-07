@@ -583,8 +583,8 @@ public function bus_stops_eta_method($route_id)
 				$processedETA = $this->calculateEta([$eta]); // Calculate relative time
 	
 				$etaList[] = [
-					"time" => !empty($eta->time) ? $eta->time : [],
-					"relative_time" => !empty($processedETA->eta) ? $processedETA->eta : []
+					"time" => $eta->eta,
+					"relative_time" => $processedETA[0]['eta'][0]['relative_time']
 				];
 			}
 	
