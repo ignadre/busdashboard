@@ -1,4 +1,3 @@
-<!--<div id="mydiv" class="container">-->
 <div id="mydiv">
 <ul class="bus-list">
   @foreach($data['bus_data'] as $key=>$value)
@@ -19,7 +18,12 @@
     </span>
     </div>
     <div>
-      <span class="destination" id="route{{$key}}" route="{{$value['route']}}">{{$value['Destination']}}</span>
+      @if(strpos($value['bus_service_no'], 'P') !== 0)
+          <span class="destination" id="route{{$key}}" route="{{$value['route']}}">{{$value['Destination']}}</span>
+      @else
+          <span class="destination" id="route{{$key}}" route="{{$value['route']}}">{{$value['Destination']}}</span>
+          <span class="note"><br>FREE / PERCUMA / 免費 / இலவசம்</span>
+      @endif
     </div>
     <div></div>
     <div>
@@ -35,6 +39,8 @@
           @endif
       @endif
       </span>
+    </div>
+    <div>
       <span class="arrival-time" id="eta_b{{$key}}" eta_date="{{$value['eta_date2']}}" eta_grace_check="NA">{{$value['stop_eta2']}} &nbsp;
         @if (strcmp($value['stop_eta2'], "NA") == 0)
             &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;

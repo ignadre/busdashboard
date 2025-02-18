@@ -5,19 +5,18 @@
     "license": "MIT",
     "type": "project",
     "require": {
-        "php": "^8.0",
-        "barryvdh/laravel-cors": "^2.0",
-        "fideloper/proxy": "^4.0",
+        "php": ">=7.0.0",
+        "barryvdh/laravel-cors": "^0.11.2",
+        "fideloper/proxy": "~3.3",
         "jrm2k6/cloudder": "^0.6.0",
-        "laravel/framework": "^9.0",
-        "laravel/tinker": "^2.0",
-        "doctrine/inflector": "^2.0" 
+        "laravel/framework": "5.5.*",
+        "laravel/tinker": "~1.0"
     },
     "require-dev": {
         "filp/whoops": "~2.0",
-        "fakerphp/faker": "^1.9",
+        "fzaninotto/faker": "~1.4",
         "mockery/mockery": "~1.0",
-        "phpunit/phpunit": "^9.0",
+        "phpunit/phpunit": "~6.0",
         "symfony/thanks": "^1.0",
         "heroku/heroku-buildpack-php": "*"
     },
@@ -56,10 +55,6 @@
     "config": {
         "preferred-install": "dist",
         "sort-packages": true,
-        "optimize-autoloader": true,
-        "allow-plugins": {
-            "kylekatarnls/update-helper": true,
-            "symfony/thanks": true
-        }
+        "optimize-autoloader": true
     }
- }
+}
