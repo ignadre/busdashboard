@@ -40,7 +40,7 @@ Route::middleware('api')->group(function () {
 
 //5. From https://laravelsyd-fypfinalver.herokuapp.com/getbus_stops_eta
 Route::middleware('api')->group(function () {
-    Route::get('/bus-services/routes/{route_id}/bus-stops/eta', 'APIController@getbus_stops_eta');
+    Route::get('/routes/{route_id}/bus-stops/eta', 'APIController@getbus_stops_eta');
 });
 
 //6. From https://laravelsyd-fypfinalver.herokuapp.com/testgetKM 

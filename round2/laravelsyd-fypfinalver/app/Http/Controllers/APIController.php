@@ -574,7 +574,7 @@ public function bus_stops_eta_method($route_id)
 				->where('route_id', '=', $services->route_id)
 				->select('eta', 'time')
 				->orderByDesc('time') // Get the latest record
-				->limit(1)
+				->limit(3)
 				->get();
 	
 			$etaList = [];
